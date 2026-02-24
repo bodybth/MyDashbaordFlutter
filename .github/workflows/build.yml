@@ -4,10 +4,12 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,9 +50,7 @@ jobs:
           name: "Dashboard v${{ github.run_number }}"
           body: |
             ## Auto-release from commit ${{ github.sha }}
-
             **Changes:** ${{ github.event.head_commit.message }}
-
             ### Install
             1. Download `dashboard-*.apk` below
             2. Open on your Android phone
