@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notification_service.dart';
 import 'widgets.dart';
 
@@ -28,6 +29,32 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
   Timer? _timer;
   int _sessions = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSessions();
+  }
+
+  Future<void> _loadSessions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedDate = prefs.getString('timer_sessions_date') ?? '';
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    if (savedDate == today) {
+      if (mounted) setState(() => _sessions = prefs.getInt('timer_sessions_count') ?? 0);
+    } else {
+      await prefs.setString('timer_sessions_date', today);
+      await prefs.setInt('timer_sessions_count', 0);
+      if (mounted) setState(() => _sessions = 0);
+    }
+  }
+
+  Future<void> _saveSessions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await prefs.setString('timer_sessions_date', today);
+    await prefs.setInt('timer_sessions_count', _sessions);
+  }
+
   void _start() {
     setState(() => _running = true);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -42,6 +69,7 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
           _timer?.cancel();
           _running = false;
           _sessions++;
+          _saveSessions();
           _onTimerDone();
         }
       });
