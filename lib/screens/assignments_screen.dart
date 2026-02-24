@@ -36,10 +36,12 @@ class AssignmentsScreen extends StatelessWidget {
           final pending = storage.assignments.where((a) => !a.completed).toList();
           final done = storage.assignments.where((a) => a.completed).toList();
           if (storage.assignments.isEmpty) {
-            return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            return const Center(
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(Icons.assignment_outlined, size: 64, color: Colors.grey),
               SizedBox(height: 12),
-              Text('No assignments yet\nTap + to add one', textAlign: TextAlign.center,
+              Text('No assignments yet\nTap + to add one',
+                  textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey, fontSize: 16)),
             ]));
           }
@@ -47,13 +49,20 @@ class AssignmentsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             children: [
               if (pending.isNotEmpty) ...[
-                const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text('Pending', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Pending',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
                 ...pending.map((a) => _AssignmentCard(assignment: a)),
               ],
               if (done.isNotEmpty) ...[
-                const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text('Completed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
+                const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('Completed',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.grey))),
                 ...done.map((a) => _AssignmentCard(assignment: a)),
               ],
             ],
@@ -76,7 +85,8 @@ class AssignmentsScreen extends StatelessWidget {
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+          padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -85,35 +95,45 @@ class AssignmentsScreen extends StatelessWidget {
                 Text(existing == null ? 'Add Assignment' : 'Edit Assignment',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                TextField(controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Assignment Name', border: OutlineInputBorder())),
+                TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                        labelText: 'Assignment Name', border: OutlineInputBorder())),
                 const SizedBox(height: 12),
-                TextField(controller: courseCtrl,
-                    decoration: const InputDecoration(labelText: 'Course', border: OutlineInputBorder())),
+                TextField(
+                    controller: courseCtrl,
+                    decoration: const InputDecoration(
+                        labelText: 'Course', border: OutlineInputBorder())),
                 const SizedBox(height: 12),
                 Consumer<StorageService>(
                   builder: (_, s, __) => DropdownButtonFormField<String>(
                     value: s.priorities.any((p) => p.name == priority) ? priority : s.priorities.first.name,
-                    decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
-                    items: s.priorities.map((p) => DropdownMenuItem(value: p.name,
-                        child: Text('${p.emoji} ${p.name}'))).toList(),
+                    decoration: const InputDecoration(
+                        labelText: 'Priority', border: OutlineInputBorder()),
+                    items: s.priorities
+                        .map((p) => DropdownMenuItem(value: p.name, child: Text('${p.emoji} ${p.name}')))
+                        .toList(),
                     onChanged: (v) => setState(() => priority = v!),
                   ),
                 ),
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: () async {
-                    final picked = await showDatePicker(context: ctx, initialDate: dueDate,
-                        firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
+                    final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: dueDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)));
                     if (picked != null) setState(() => dueDate = picked);
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Due Date', border: OutlineInputBorder()),
+                    decoration:
+                        const InputDecoration(labelText: 'Due Date', border: OutlineInputBorder()),
                     child: Text(DateFormat('MMM dd, yyyy').format(dueDate)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Reminder section
+                // Reminder & Alarm section
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -121,83 +141,96 @@ class AssignmentsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF667EEA).withOpacity(0.2)),
                   ),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Row(children: [
-                      Icon(Icons.notifications_outlined, color: Color(0xFF667EEA), size: 18),
-                      SizedBox(width: 6),
-                      Text('Reminder', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF667EEA))),
-                    ]),
-                    const SizedBox(height: 10),
-                    Row(children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.notifications, size: 16),
-                          label: Text(reminderTime != null
-                              ? DateFormat('MMM dd, HH:mm').format(reminderTime!)
-                              : 'Local Notification'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF667EEA),
-                            side: const BorderSide(color: Color(0xFF667EEA)),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(children: [
+                          Icon(Icons.notifications_outlined, color: Color(0xFF667EEA), size: 18),
+                          SizedBox(width: 6),
+                          Text('Reminder',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF667EEA))),
+                        ]),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.notifications, size: 16),
+                              label: Text(reminderTime != null
+                                  ? DateFormat('MMM dd, HH:mm').format(reminderTime!)
+                                  : 'Local Notification'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF667EEA),
+                                side: const BorderSide(color: Color(0xFF667EEA)),
+                              ),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                    context: ctx,
+                                    initialDate: dueDate,
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(const Duration(days: 365)));
+                                if (date == null || !ctx.mounted) return;
+                                final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
+                                if (time == null) return;
+                                setState(() {
+                                  reminderTime =
+                                      DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                                });
+                              },
+                            ),
                           ),
-                          onPressed: () async {
-                            final date = await showDatePicker(context: ctx, initialDate: dueDate,
-                                firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
-                            if (date == null || !ctx.mounted) return;
-                            final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
-                            if (time == null) return;
-                            setState(() {
-                              reminderTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.alarm, size: 16),
-                          label: const Text('Set Alarm'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF764BA2),
-                            side: const BorderSide(color: Color(0xFF764BA2)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.alarm, size: 16),
+                              label: const Text('Set Alarm'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF764BA2),
+                                side: const BorderSide(color: Color(0xFF764BA2)),
+                              ),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                    context: ctx,
+                                    initialDate: dueDate,
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(const Duration(days: 365)));
+                                if (date == null || !ctx.mounted) return;
+                                final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
+                                if (time == null || !ctx.mounted) return;
+                                final alarmTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                                if (alarmTime.isAfter(DateTime.now())) {
+                                  final label = nameCtrl.text.isNotEmpty ? nameCtrl.text : 'Assignment';
+                                  final alarmId = alarmTime.millisecondsSinceEpoch ~/ 1000 % 100000;
+                                  await NotificationService.scheduleAlarm(
+                                    id: alarmId,
+                                    label: label,
+                                    alarmTime: alarmTime,
+                                  );
+                                  if (ctx.mounted)
+                                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                                        content: Text(
+                                            'Alarm set for ${alarmTime.hour.toString().padLeft(2, "0")}:${alarmTime.minute.toString().padLeft(2, "0")}'),
+                                        duration: const Duration(seconds: 2)));
+                                }
+                              },
+                            ),
                           ),
-                          onPressed: () async {
-                            final date = await showDatePicker(context: ctx, initialDate: dueDate,
-                                firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
-                            if (date == null || !ctx.mounted) return;
-                            final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
-                            if (time == null || !ctx.mounted) return;
-                            final alarmTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-                            if (alarmTime.isAfter(DateTime.now())) {
-                              final label = nameCtrl.text.isNotEmpty ? nameCtrl.text : 'Assignment';
-                              final alarmId = alarmTime.millisecondsSinceEpoch ~/ 1000 % 100000;
-                              await NotificationService.scheduleAlarm(
-                                id: alarmId,
-                                title: '⏰ Alarm: $label',
-                                body: 'Scheduled alarm for your assignment',
-                                scheduledTime: alarmTime,
-                              );
-                              if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(
-                                SnackBar(content: Text('Alarm set for ${alarmTime.hour.toString().padLeft(2,"0")}:${alarmTime.minute.toString().padLeft(2,"0")}'), duration: const Duration(seconds: 2)));
-                            }
-                          },
-                        ),
-                      ),
-                    ]),
-                    if (reminderTime != null) ...[
-                      const SizedBox(height: 8),
-                      Row(children: [
-                        const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                        const SizedBox(width: 6),
-                        Text('Notification: ${DateFormat('MMM dd, HH:mm').format(reminderTime!)}',
-                            style: const TextStyle(fontSize: 12, color: Colors.green)),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () => setState(() => reminderTime = null),
-                          child: const Icon(Icons.close, size: 16, color: Colors.red),
-                        ),
+                        ]),
+                        if (reminderTime != null) ...[
+                          const SizedBox(height: 8),
+                          Row(children: [
+                            const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                                'Notification: ${DateFormat('MMM dd, HH:mm').format(reminderTime!)}',
+                                style: const TextStyle(fontSize: 12, color: Colors.green)),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(() => reminderTime = null),
+                              child: const Icon(Icons.close, size: 16, color: Colors.red),
+                            ),
+                          ]),
+                        ],
                       ]),
-                    ],
-                  ]),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -217,9 +250,12 @@ class AssignmentsScreen extends StatelessWidget {
                         reminderTime: reminderTime,
                       );
                       final s = context.read<StorageService>();
-                      if (existing == null) s.addAssignment(assignment); else s.updateAssignment(assignment);
+                      if (existing == null)
+                        s.addAssignment(assignment);
+                      else
+                        s.updateAssignment(assignment);
 
-                      // Schedule notification if reminder set
+                      // Schedule reminder notification
                       if (reminderTime != null && reminderTime!.isAfter(DateTime.now())) {
                         final idHash = assignment.id.hashCode.abs() % 100000;
                         await NotificationService.scheduleReminder(
@@ -242,6 +278,7 @@ class AssignmentsScreen extends StatelessWidget {
   }
 }
 
+// Assignment Card widget
 class _AssignmentCard extends StatelessWidget {
   final Assignment assignment;
   const _AssignmentCard({required this.assignment});
@@ -262,12 +299,16 @@ class _AssignmentCard extends StatelessWidget {
           onChanged: (_) => storage.toggleAssignment(assignment.id),
         ),
         title: Text(assignment.name,
-            style: TextStyle(fontWeight: FontWeight.w600,
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
                 decoration: assignment.completed ? TextDecoration.lineThrough : null,
                 color: assignment.completed ? Colors.grey : null)),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${assignment.course} • ${DateFormat('MMM dd').format(assignment.dueDate)} • ${daysLeft >= 0 ? '$daysLeft days left' : 'Overdue'}',
-              style: TextStyle(color: daysLeft < 0 && !assignment.completed ? Colors.red : Colors.grey[600], fontSize: 12)),
+          Text(
+              '${assignment.course} • ${DateFormat('MMM dd').format(assignment.dueDate)} • ${daysLeft >= 0 ? '$daysLeft days left' : 'Overdue'}',
+              style: TextStyle(
+                  color: daysLeft < 0 && !assignment.completed ? Colors.red : Colors.grey[600],
+                  fontSize: 12)),
           if (assignment.reminderTime != null)
             Text('🔔 ${DateFormat('MMM dd, HH:mm').format(assignment.reminderTime!)}',
                 style: const TextStyle(fontSize: 11, color: Color(0xFF667EEA))),
@@ -276,10 +317,7 @@ class _AssignmentCard extends StatelessWidget {
           Text('${priority.emoji}', style: const TextStyle(fontSize: 18)),
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: Color(0xFF667EEA), size: 18),
-            onPressed: () {
-              // find the parent screen's _showAddDialog via overlay trick
-              showEditDialog(context, assignment);
-            },
+            onPressed: () => _showEditDialog(context, assignment),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
@@ -295,7 +333,7 @@ class _AssignmentCard extends StatelessWidget {
     );
   }
 
-  void showEditDialog(BuildContext context, Assignment assignment) {
+  void _showEditDialog(BuildContext context, Assignment assignment) {
     final storage = context.read<StorageService>();
     final nameCtrl = TextEditingController(text: assignment.name);
     final courseCtrl = TextEditingController(text: assignment.course);
@@ -308,16 +346,15 @@ class _AssignmentCard extends StatelessWidget {
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Padding(
-          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+          padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
           child: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const Text('Edit Assignment', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
-              TextField(controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder())),
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder())),
               const SizedBox(height: 12),
-              TextField(controller: courseCtrl,
-                  decoration: const InputDecoration(labelText: 'Course', border: OutlineInputBorder())),
+              TextField(controller: courseCtrl, decoration: const InputDecoration(labelText: 'Course', border: OutlineInputBorder())),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: storage.priorities.any((p) => p.name == priority) ? priority : storage.priorities.first.name,
@@ -339,74 +376,33 @@ class _AssignmentCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Row(children: [
-                Expanded(child: OutlinedButton.icon(
-                  icon: const Icon(Icons.notifications, size: 16),
-                  label: Text(reminderTime != null ? DateFormat('MMM dd HH:mm').format(reminderTime!) : 'Notification'),
-                  onPressed: () async {
-                    final date = await showDatePicker(context: ctx, initialDate: dueDate,
-                        firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
-                    if (date == null || !ctx.mounted) return;
-                    final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
-                    if (time == null) return;
-                    setState(() { reminderTime = DateTime(date.year, date.month, date.day, time.hour, time.minute); });
-                  },
-                )),
-                const SizedBox(width: 8),
-                Expanded(child: OutlinedButton.icon(
-                  icon: const Icon(Icons.alarm, size: 16),
-                  label: const Text('Alarm'),
-                  style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF764BA2), side: const BorderSide(color: Color(0xFF764BA2))),
-                  onPressed: () async {
-                    final date = await showDatePicker(context: ctx, initialDate: dueDate,
-                        firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
-                    if (date == null || !ctx.mounted) return;
-                    final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
-                    if (time == null || !ctx.mounted) return;
-                    final alarmTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-                    if (alarmTime.isAfter(DateTime.now())) {
-                      final alarmId = alarmTime.millisecondsSinceEpoch ~/ 1000 % 100000;
-                      await NotificationService.scheduleAlarm(
-                        id: alarmId,
-                        title: '⏰ Alarm: ${nameCtrl.text.isNotEmpty ? nameCtrl.text : "Assignment"}',
-                        body: 'Scheduled alarm',
-                        scheduledTime: alarmTime,
-                      );
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(content: Text('Alarm set for ${alarmTime.hour.toString().padLeft(2,"0")}:${alarmTime.minute.toString().padLeft(2,"0")}'), duration: const Duration(seconds: 2)));
-                    }
-                  },
-                )),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.alarm, size: 16),
+                    label: const Text('Alarm'),
+                    onPressed: () async {
+                      final date = await showDatePicker(context: ctx, initialDate: dueDate,
+                          firstDate: DateTime.now(), lastDate: DateTime.now().add(const Duration(days: 365)));
+                      if (date == null || !ctx.mounted) return;
+                      final time = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
+                      if (time == null || !ctx.mounted) return;
+                      final alarmTime = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                      if (alarmTime.isAfter(DateTime.now())) {
+                        final label = nameCtrl.text.isNotEmpty ? nameCtrl.text : 'Assignment';
+                        final alarmId = alarmTime.millisecondsSinceEpoch ~/ 1000 % 100000;
+                        await NotificationService.scheduleAlarm(
+                          id: alarmId,
+                          label: label,
+                          alarmTime: alarmTime,
+                        );
+                        if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                            content: Text('Alarm set for ${alarmTime.hour.toString().padLeft(2, "0")}:${alarmTime.minute.toString().padLeft(2, "0")}'),
+                            duration: const Duration(seconds: 2)));
+                      }
+                    },
+                  ),
+                ),
               ]),
-              if (reminderTime != null) Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Row(children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 14),
-                  const SizedBox(width: 4),
-                  Text('${DateFormat('MMM dd HH:mm').format(reminderTime!)}', style: const TextStyle(fontSize: 12, color: Colors.green)),
-                  const Spacer(),
-                  GestureDetector(onTap: () => setState(() => reminderTime = null),
-                      child: const Icon(Icons.close, size: 14, color: Colors.red)),
-                ]),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(width: double.infinity, child: GradientButton(
-                label: 'Save', icon: Icons.save,
-                onPressed: () async {
-                  final updated = assignment.copyWith(completed: assignment.completed, reminderTime: reminderTime);
-                  final full = Assignment(id: updated.id, name: nameCtrl.text.trim(), course: courseCtrl.text.trim(),
-                      dueDate: dueDate, priority: priority, completed: updated.completed, reminderTime: reminderTime);
-                  storage.updateAssignment(full);
-                  if (reminderTime != null && reminderTime!.isAfter(DateTime.now())) {
-                    await NotificationService.scheduleReminder(
-                      id: full.id.hashCode.abs() % 100000,
-                      title: '📋 Assignment Reminder',
-                      body: '${full.name} due ${DateFormat('MMM dd').format(dueDate)}',
-                      scheduledTime: reminderTime!,
-                    );
-                  }
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-              )),
             ]),
           ),
         ),
