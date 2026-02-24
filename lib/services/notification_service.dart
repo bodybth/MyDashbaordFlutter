@@ -66,11 +66,11 @@ class NotificationService {
   }
 
   // =========================
-  // ⏰ Alarm Notification
+  // ⏰ Alarm Notification (FIXED)
   // =========================
   static Future<void> scheduleAlarm({
     required int id,
-    required String label,
+    required String label, // ✔️ هنا الاسم الصحيح
     required DateTime alarmTime,
   }) async {
     await init();
@@ -93,7 +93,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       id,
-      '⏰ Alarm: $label',
+      '⏰ Alarm: $label', // ✔️ بيتبني هنا
       'Your alarm is ringing!',
       tz.TZDateTime.from(alarmTime, tz.local),
       details,
@@ -140,23 +140,25 @@ class NotificationService {
 // 🎯 Helper Function (UI-safe)
 // =========================
 Future<void> scheduleAlarmDialog(
-    BuildContext context,
-    DateTime alarmTime,
-    String label,
+  BuildContext context,
+  DateTime alarmTime,
+  String label,
 ) async {
   final id =
-      DateTime.now().millisecondsSinceEpoch % 100000; // safer unique id
+      DateTime.now().millisecondsSinceEpoch % 100000;
 
   await NotificationService.scheduleAlarm(
     id: id,
-    label: label,
+    label: label, // ✔️ مهم جدًا
     alarmTime: alarmTime,
   );
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        '⏰ Alarm set for ${alarmTime.hour.toString().padLeft(2, '0')}:${alarmTime.minute.toString().padLeft(2, '0')}',
+        '⏰ Alarm set for '
+        '${alarmTime.hour.toString().padLeft(2, '0')}:'
+        '${alarmTime.minute.toString().padLeft(2, '0')}',
       ),
       backgroundColor: Colors.green,
       duration: const Duration(seconds: 3),
