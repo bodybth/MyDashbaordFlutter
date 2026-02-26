@@ -1,0 +1,103 @@
+name: Build, Test & Release APK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run tests
+        run: flutter test
+
+  build:
+    name: Build APK
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Rename APK
+        run: |
+          DATE=$(date +'%Y-%m-%d')
+          cp build/app/outputs/flutter-apk/app-release.apk dashboard-v2-$DATE.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-apk
+          path: dashboard-v2-*.apk
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: "Dashboard v2.${{ github.run_number }}"
+          body: |
+            ## 🚀 Auto-release from commit ${{ github.sha }}
+            **Changes:** ${{ github.event.head_commit.message }}
+
+            ### What's new in v2.0
+            - 🗂 **Collections Hub** – Unified screen merging Formulas, Notes, Email Addresses & custom collections with beautiful tile grid
+            - 📋 **Tasks** – Filter by In-Progress / Incoming / Done; sort by Deadline, Course, or Priority; assignment details field; fixed save button on edit
+            - 📅 **Schedule** – AM/PM clock mode; toggle between list view and horizontal table view (long-press cell to edit/delete)
+            - ⚙️ **Settings** – Dedicated screen for Dark/Light theme toggle and Import/Export
+
+            ### Install
+            1. Download `dashboard-v2-*.apk` below
+            2. Open on your Android phone
+            3. Allow "Install from unknown sources" if prompted
+          files: dashboard-v2-*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
