@@ -102,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           SizedBox(width: 40, child: LinearProgressIndicator(
               backgroundColor: Colors.white12,
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.6)))),
-        ])))));
+        ]))))));
 }
 
 // ════════════════════════════════════════════════════════════════════
