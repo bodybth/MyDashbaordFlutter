@@ -8,7 +8,7 @@
 ![Flutter](https://img.shields.io/badge/Flutter-3.19.6-02569B?style=for-the-badge&logo=flutter)
 
 *An all-in-one productivity app built for engineering students.*
-
+LOCKED
 </div>
 
 ---
