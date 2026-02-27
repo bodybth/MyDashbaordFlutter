@@ -26,21 +26,44 @@ jobs:
 
       - run: flutter pub get
 
-      # Auto-bump versionCode to github.run_number so each APK is recognized
-      # as a newer version by Android and installs as an UPDATE (not fresh install)
-      - name: Set versionCode from run number
+      # ── Version scheme ───────────────────────────────────────────
+      # versionCode = YYMMDDRRR  (9 digits, always fits Android 32-bit signed int)
+      #   e.g. run 29 on 2025-02-27 → 250227029
+      #   Max ever: 991231999 < 2,147,483,647 ✓
+      #
+      # pubspec format:  1.0.0+YYMMDDRRR
+      #   Flutter maps the +N part → versionCode in build.gradle
+      #   package_info_plus reads it back as .buildNumber at runtime
+      #
+      # GitHub tag: vYYMMDDRRR  → app strips 'v', parses as int, compares with buildNumber
+      # ─────────────────────────────────────────────────────────────
+      - name: Compute version
         run: |
-          sed -i "s/versionCode [0-9]*/versionCode ${{ github.run_number }}/" android/app/build.gradle
-          sed -i "s/versionName \".*\"/versionName \"1.3.${{ github.run_number }}\"/" android/app/build.gradle
-          echo "--- build.gradle version ---"
+          YY=$(date +'%y')
+          MM=$(date +'%m')
+          DD=$(date +'%d')
+          RRR=$(printf '%03d' ${{ github.run_number }})
+          CODE="${YY}${MM}${DD}${RRR}"
+          echo "VERSION_CODE=${CODE}" >> $GITHUB_ENV
+          echo "Computed versionCode: ${CODE}"
+          python3 -c "v=${CODE}; print('Fits 32-bit ✅' if v < 2147483647 else 'OVERFLOW ❌')"
+
+      - name: Patch pubspec.yaml
+        run: |
+          sed -i "s/^version: .*/version: 1.0.0+${{ env.VERSION_CODE }}/" pubspec.yaml
+          echo "pubspec: $(grep '^version:' pubspec.yaml)"
+
+      - name: Patch build.gradle
+        run: |
+          sed -i "s/versionCode [0-9]*/versionCode ${{ env.VERSION_CODE }}/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"${{ env.VERSION_CODE }}\"/" android/app/build.gradle
+          echo "=== build.gradle ==="
           grep -E "versionCode|versionName" android/app/build.gradle
 
       - run: flutter build apk --release --no-tree-shake-icons
 
       - name: Rename APK
-        run: |
-          DATE=$(date +'%Y-%m-%d')
-          cp build/app/outputs/flutter-apk/app-release.apk "dashboard-v1.3.${{ github.run_number }}-$DATE.apk"
+        run: cp build/app/outputs/flutter-apk/app-release.apk "dashboard-v${{ env.VERSION_CODE }}.apk"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -49,19 +72,20 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.${{ github.run_number }}
-          name: "Dashboard v1.3.${{ github.run_number }}"
+          tag_name: v${{ env.VERSION_CODE }}
+          name: "Dashboard v${{ env.VERSION_CODE }}"
           body: |
-            **Changes:** ${{ github.event.head_commit.message }}
+            **Commit:** ${{ github.event.head_commit.message }}
+            **versionCode:** `${{ env.VERSION_CODE }}`
+            **App ID:** `com.bodybth.mydashboard`
 
-            ### ✅ Install as Update
-            This APK uses the same App ID (`com.bodybth.mydashboard`) as previous builds.
-            Android will install it **as an update** — your data is preserved.
+            ### ✅ Installs as Update
+            versionCode `${{ env.VERSION_CODE }}` is higher than all previous builds.
+            Android shows **Update** — your data is preserved.
 
             ### 📲 How to install
-            1. Download `dashboard-v1.3.${{ github.run_number }}-*.apk` below
-            2. Open it on your Android phone
-            3. Tap **Update** (if already installed) or **Install**
+            1. Download `dashboard-v${{ env.VERSION_CODE }}.apk`
+            2. Open it on your phone → tap **Update**
           files: dashboard-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
