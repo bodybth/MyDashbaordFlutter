@@ -165,11 +165,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             FutureBuilder<PackageInfo>(
               future: PackageInfo.fromPlatform(),
               builder: (_, snap) {
-                final ver = snap.hasData ? snap.data!.version : '…';
+                // buildNumber = versionCode set by CI (e.g. 250227029)
+                // This is the real unique build identifier — always shown to user
+                final build = snap.hasData ? snap.data!.buildNumber : '…';
                 return ListTile(
                   leading: const Icon(Icons.info_outline, color: kPrimary),
-                  title: const Text('Version', style: TextStyle(fontWeight: FontWeight.w600)),
-                  trailing: Text(ver, style: const TextStyle(color: Colors.grey)));
+                  title: const Text('Build', style: TextStyle(fontWeight: FontWeight.w600)),
+                  trailing: Text(build, style: const TextStyle(color: Colors.grey)));
               }),
             const Divider(height: 1, indent: 56),
             const ListTile(
@@ -583,8 +585,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           type: FileType.custom, allowedExtensions: ['json'], withData: true);
       if (r == null || r.files.isEmpty) return;
       final f = r.files.first;
-      final json = f.bytes != null ? String.fromCharCodes(f.bytes!)
-          : f.path != null ? await File(f.path!).readAsString()
+      // utf8.decode preserves multi-byte chars (emojis, Arabic, etc.)
+      // String.fromCharCodes would corrupt them by treating each byte as a codepoint
+      final json = f.bytes != null ? utf8.decode(f.bytes!)
+          : f.path != null ? await File(f.path!).readAsString(encoding: utf8)
           : throw Exception('Could not read file');
       if (mounted) _confirmJsonImport(json, sections);
     } catch (e) {

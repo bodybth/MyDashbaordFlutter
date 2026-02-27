@@ -45,7 +45,11 @@ class StorageService extends ChangeNotifier {
     if (nb != null) {
       notebooks = (jsonDecode(nb) as List).map((e) => Notebook.fromJson(e)).toList();
     } else {
-      notebooks = [];
+      notebooks = [
+        Notebook(id: 'nb_formulas', title: 'Formulas',       emoji: '📐', type: 'formulas'),
+        Notebook(id: 'nb_notes',    title: 'Notes',           emoji: '📝', type: 'notes'),
+        Notebook(id: 'nb_emails',   title: 'Email Addresses', emoji: '📧', type: 'notes'),
+      ];
       _saveNotebooks();
     }
 
@@ -195,7 +199,11 @@ class StorageService extends ChangeNotifier {
     scheduleItems.clear();
     notes.clear();
     formulas = List.from(defaultFormulas);
-    notebooks = [];
+    notebooks = [
+      Notebook(id: 'nb_formulas', title: 'Formulas',       emoji: '📐', type: 'formulas'),
+      Notebook(id: 'nb_notes',    title: 'Notes',           emoji: '📝', type: 'notes'),
+      Notebook(id: 'nb_emails',   title: 'Email Addresses', emoji: '📧', type: 'notes'),
+    ];
     noteCategories    = List.from(defaultNoteCategories);
     formulaCategories = List.from(defaultFormulaCategories);
     priorities        = List.from(defaultPriorities);
