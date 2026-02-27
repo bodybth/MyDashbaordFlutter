@@ -10,7 +10,7 @@
 *An all-in-one productivity app built for engineering students.*
 
 </div>
-LOCKED
+
 ---
 
 ## ✨ Features Overview
