@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import 'widgets.dart';
 
-// Timer uses AutomaticKeepAliveClientMixin to survive tab switches
 class TimerScreen extends StatefulWidget {
   const TimerScreen({super.key});
   @override
@@ -12,7 +11,7 @@ class TimerScreen extends StatefulWidget {
 
 class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true; // <-- keeps timer alive when switching tabs
+  bool get wantKeepAlive => true;
 
   static const _presets = {
     'Pomodoro': 25,
@@ -48,53 +47,36 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
     });
   }
 
-  void _pause() {
-    _timer?.cancel();
-    setState(() => _running = false);
-  }
+  void _pause() { _timer?.cancel(); setState(() => _running = false); }
 
   void _reset() {
     _timer?.cancel();
-    setState(() {
-      _running = false;
-      _minutes = _presets[_mode]!;
-      _seconds = 0;
-    });
+    setState(() { _running = false; _minutes = _presets[_mode]!; _seconds = 0; });
   }
 
   void _setMode(String mode) {
     _timer?.cancel();
-    setState(() {
-      _mode = mode;
-      _minutes = _presets[mode]!;
-      _seconds = 0;
-      _running = false;
-    });
+    setState(() { _mode = mode; _minutes = _presets[mode]!; _seconds = 0; _running = false; });
   }
 
   Future<void> _onTimerDone() async {
-    // Send notification so user is alerted even if phone is locked
     await NotificationService.showImmediate(
       title: '⏱️ $_mode Complete!',
-      body: '$_mode session finished. ${_sessions} sessions done today. Take a break!',
+      body: '$_mode session finished. $_sessions sessions done today. Take a break!',
     );
-
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('⏰ $_mode Done!'),
-        content: Text('Session complete!\n$_sessions sessions today 🔥'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF667EEA), foregroundColor: Colors.white),
-            onPressed: () { Navigator.pop(context); _reset(); _start(); },
-            child: const Text('Start Again'),
-          ),
-        ],
-      ),
-    );
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: Text('⏰ $_mode Done!'),
+      content: Text('Session complete!\n$_sessions sessions today 🔥'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: kPrimary, foregroundColor: Colors.white),
+          onPressed: () { Navigator.pop(context); _reset(); _start(); },
+          child: const Text('Start Again'),
+        ),
+      ],
+    ));
   }
 
   double get _progress {
@@ -104,19 +86,22 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
+  void dispose() { _timer?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // required for AutomaticKeepAliveClientMixin
+    super.build(context);
+    // Use theme-aware text color for unselected chips
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final isBreak = _mode.contains('Break');
+    final accentColor = isBreak ? Colors.green : kPrimary;
+
     return Scaffold(
       appBar: const GradientAppBar(title: '⏱️ Study Timer'),
       body: Column(children: [
         const SizedBox(height: 20),
-        // Mode chips
+
+        // ── Mode chips ────────────────────────────────────────────
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -129,15 +114,20 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
                   label: Text(mode),
                   selected: selected,
                   onSelected: (_) => _setMode(mode),
-                  selectedColor: const Color(0xFF667EEA),
-                  labelStyle: TextStyle(color: selected ? Colors.white : Colors.black, fontWeight: FontWeight.bold),
+                  selectedColor: kPrimary,
+                  // KEY FIX: use onSurface (theme-aware) instead of hardcoded Colors.black
+                  labelStyle: TextStyle(
+                    color: selected ? Colors.white : onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               );
             }).toList(),
           ),
         ),
         const SizedBox(height: 40),
-        // Timer circle
+
+        // ── Timer circle ──────────────────────────────────────────
         Center(
           child: SizedBox(
             width: 240, height: 240,
@@ -149,10 +139,8 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
                   child: CircularProgressIndicator(
                     value: _progress,
                     strokeWidth: 12,
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation(
-                      _mode.contains('Break') ? Colors.green : const Color(0xFF667EEA),
-                    ),
+                    backgroundColor: Colors.grey.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation(accentColor),
                   ),
                 ),
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -160,10 +148,10 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
                     '${_minutes.toString().padLeft(2, '0')}:${_seconds.toString().padLeft(2, '0')}',
                     style: TextStyle(
                       fontSize: 56, fontWeight: FontWeight.bold,
-                      color: _mode.contains('Break') ? Colors.green : const Color(0xFF667EEA),
+                      color: accentColor,
                     ),
                   ),
-                  Text(_mode, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                  Text(_mode, style: TextStyle(fontSize: 14, color: onSurface.withOpacity(0.6))),
                   if (_running)
                     const Padding(
                       padding: EdgeInsets.only(top: 4),
@@ -175,12 +163,12 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
           ),
         ),
         const SizedBox(height: 40),
-        // Controls
+
+        // ── Controls ──────────────────────────────────────────────
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           IconButton(
-            icon: const Icon(Icons.refresh, size: 32, color: Colors.grey),
-            onPressed: _reset,
-            tooltip: 'Reset',
+            icon: Icon(Icons.refresh, size: 32, color: onSurface.withOpacity(0.5)),
+            onPressed: _reset, tooltip: 'Reset',
           ),
           const SizedBox(width: 20),
           GestureDetector(
@@ -189,13 +177,11 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
               width: 72, height: 72,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: _mode.contains('Break')
-                      ? [Colors.green, Colors.teal]
-                      : [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                  colors: isBreak ? [Colors.green, Colors.teal] : [kPrimary, kSecondary],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [BoxShadow(
-                  color: const Color(0xFF667EEA).withOpacity(0.4),
+                  color: accentColor.withOpacity(0.4),
                   blurRadius: 12, offset: const Offset(0, 4),
                 )],
               ),
@@ -204,25 +190,25 @@ class _TimerScreenState extends State<TimerScreen> with AutomaticKeepAliveClient
           ),
           const SizedBox(width: 20),
           IconButton(
-            icon: const Icon(Icons.skip_next, size: 32, color: Colors.grey),
-            onPressed: _onTimerDone,
-            tooltip: 'Skip',
+            icon: Icon(Icons.skip_next, size: 32, color: onSurface.withOpacity(0.5)),
+            onPressed: _onTimerDone, tooltip: 'Skip',
           ),
         ]),
         const SizedBox(height: 32),
-        // Sessions counter
+
+        // ── Sessions counter ──────────────────────────────────────
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF667EEA).withOpacity(0.08),
+            color: kPrimary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.local_fire_department, color: Color(0xFF667EEA)),
+            const Icon(Icons.local_fire_department, color: kPrimary),
             const SizedBox(width: 8),
             Text('$_sessions sessions completed today',
-                style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF667EEA))),
+                style: const TextStyle(fontWeight: FontWeight.w600, color: kPrimary)),
           ]),
         ),
       ]),
