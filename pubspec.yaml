@@ -1,7 +1,7 @@
 name: my_dashboard
 description: Engineering Student Dashboard
 publish_to: 'none'
-version: 1.4.0+4
+version: 250227001+250227001
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -26,6 +26,7 @@ dependencies:
   http: ^1.2.1
   archive: ^3.4.10
   url_launcher: ^6.2.6
+  package_info_plus: ^8.0.2
 
 dev_dependencies:
   flutter_test:

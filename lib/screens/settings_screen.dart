@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../models/models.dart';
 import '../services/storage_service.dart';
 import '../services/theme_service.dart';
@@ -161,10 +162,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _SectionHeader('ℹ️ About'),
         Card(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           child: Column(children: [
-            const ListTile(
-              leading: Icon(Icons.info_outline, color: kPrimary),
-              title: Text('Version', style: TextStyle(fontWeight: FontWeight.w600)),
-              trailing: Text('1.4.0', style: TextStyle(color: Colors.grey))),
+            FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (_, snap) {
+                final ver = snap.hasData ? snap.data!.version : '…';
+                return ListTile(
+                  leading: const Icon(Icons.info_outline, color: kPrimary),
+                  title: const Text('Version', style: TextStyle(fontWeight: FontWeight.w600)),
+                  trailing: Text(ver, style: const TextStyle(color: Colors.grey)));
+              }),
             const Divider(height: 1, indent: 56),
             const ListTile(
               leading: Icon(Icons.school_outlined, color: kPrimary),

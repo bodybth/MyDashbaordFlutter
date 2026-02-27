@@ -22,10 +22,11 @@ android {
         applicationId "com.bodybth.mydashboard"
         minSdk 21
         targetSdk 34
-        // CI overwrites this with YYMMDDRRR (e.g. 250227024).
-        // Seeded at 250227001 so any CI build is higher than manual builds.
+        // CI overwrites both values with YYMMDDRRR (e.g. 250227029).
+        // Seed is 250227001 which is already > any run-number-based versionCode (max was ~30).
+        // This guarantees every new CI build installs as an update over anything previously installed.
         versionCode 250227001
-        versionName "1.4.0"
+        versionName "250227001"
     }
 
     buildTypes {
