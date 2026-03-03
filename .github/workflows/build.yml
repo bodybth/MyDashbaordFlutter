@@ -60,7 +60,7 @@ jobs:
           echo "=== build.gradle ==="
           grep -E "versionCode|versionName" android/app/build.gradle
 
-      - run: flutter build apk --release --no-tree-shake-icons
+      - run: flutter build apk --release --no-tree-shake-icons --target-platform android-arm,android-arm64
 
       - name: Rename APK
         run: cp build/app/outputs/flutter-apk/app-release.apk "dashboard-v${{ env.VERSION_CODE }}.apk"
