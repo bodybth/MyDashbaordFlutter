@@ -1,0 +1,4 @@
+git add .
+git commit -m "Add reminders, editable formulas, category management"
+git pull --rebase origin main
+git push --force origin main 
