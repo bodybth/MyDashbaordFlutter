@@ -1,9 +1,7 @@
 package com.body777.fileexp.ui
 
 import android.content.SharedPreferences
-import android.net.wifi.WifiManager
 import android.os.Bundle
-import android.text.format.Formatter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -40,7 +38,6 @@ class SettingsFragment : Fragment() {
             Toast.makeText(requireContext(), "Server restarting…", Toast.LENGTH_SHORT).show()
         }
 
-        // Show current IP
         binding.tvLocalIp.text = getLocalIp()
     }
 
@@ -48,6 +45,10 @@ class SettingsFragment : Fragment() {
         binding.etServeDir.setText(prefs.getString("serve_dir", "/sdcard"))
         binding.etPort.setText(prefs.getInt("port", 8001).toString())
         binding.etPassword.setText(prefs.getString("password", "702152"))
+        
+        // Load the custom IP string
+        binding.etCustomIp.setText(prefs.getString("custom_ip", ""))
+        
         when (prefs.getString("theme", "system")) {
             "light"  -> binding.rgTheme.check(R.id.rb_light)
             "dark"   -> binding.rgTheme.check(R.id.rb_dark)
@@ -56,33 +57,33 @@ class SettingsFragment : Fragment() {
     }
 
     private fun saveSettings() {
-        val dir      = binding.etServeDir.text.toString().trim().ifEmpty { "/sdcard" }
+        val dir      = binding.etServeDir.text.toString().trim()
         val portStr  = binding.etPort.text.toString().trim()
         val password = binding.etPassword.text.toString()
+        val customIp = binding.etCustomIp.text.toString().trim() // Read from UI
         val port     = portStr.toIntOrNull()?.coerceIn(1024, 65535) ?: 8001
-        val theme    = when (binding.rgTheme.checkedRadioButtonId) {
+        
+        val theme = when (binding.rgTheme.checkedRadioButtonId) {
             R.id.rb_light  -> "light"
             R.id.rb_dark   -> "dark"
             else           -> "system"
         }
 
         prefs.edit()
-            .putString("serve_dir", dir)
+            .putString("serve_dir", dir.ifEmpty { "/sdcard" })
             .putInt("port", port)
             .putString("password", password)
+            .putString("custom_ip", customIp) // Save to prefs
             .putString("theme", theme)
             .apply()
 
-        applyTheme(theme)
-        Toast.makeText(requireContext(), "Settings saved", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun applyTheme(theme: String) {
-        AppCompatDelegate.setDefaultNightMode(when (theme) {
-            "light"  -> AppCompatDelegate.MODE_NIGHT_NO
-            "dark"   -> AppCompatDelegate.MODE_NIGHT_YES
-            else     -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        AppCompatDelegate.setDefaultNightMode(when(theme) {
+            "light" -> AppCompatDelegate.MODE_NIGHT_NO
+            "dark"  -> AppCompatDelegate.MODE_NIGHT_YES
+            else    -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         })
+        
+        Toast.makeText(requireContext(), "Settings saved", Toast.LENGTH_SHORT).show()
     }
 
     private fun getLocalIp(): String {
@@ -91,9 +92,7 @@ class SettingsFragment : Fragment() {
             for (iface in ifaces) {
                 if (!iface.isUp || iface.isLoopback) continue
                 for (addr in iface.inetAddresses) {
-                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        return addr.hostAddress ?: continue
-                    }
+                    if (!addr.isLoopbackAddress && addr is Inet4Address) return addr.hostAddress ?: continue
                 }
             }
         } catch (_: Exception) {}

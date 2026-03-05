@@ -118,7 +118,9 @@ class FileServer(
             val length = end - start + 1
             val fis = FileInputStream(file)
             fis.skip(start)
-            val resp = Response(Status.PARTIAL_CONTENT, mime, fis, length)
+            
+            // FIX: Using newFixedLengthResponse instead of Response constructor
+            val resp = newFixedLengthResponse(Status.PARTIAL_CONTENT, mime, fis, length)
             resp.addHeader("Content-Range", "bytes $start-$end/$size")
             resp.addHeader("Content-Length", length.toString())
             resp.addHeader("Accept-Ranges", "bytes")
@@ -126,7 +128,8 @@ class FileServer(
         }
 
         val fis = FileInputStream(file)
-        val resp = Response(Status.OK, mime, fis, size)
+        // FIX: Using newFixedLengthResponse instead of Response constructor
+        val resp = newFixedLengthResponse(Status.OK, mime, fis, size)
         resp.addHeader("Content-Length", size.toString())
         resp.addHeader("Accept-Ranges", "bytes")
         if (forceDownload) resp.addHeader("Content-Disposition", "attachment; filename=\"${file.name}\"")

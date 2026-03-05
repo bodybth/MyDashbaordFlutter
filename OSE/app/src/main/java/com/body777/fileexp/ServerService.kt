@@ -48,16 +48,21 @@ class ServerService : Service() {
         val port     = prefs.getInt("port", 8001)
         val dir      = prefs.getString("serve_dir", "/sdcard") ?: "/sdcard"
         val password = prefs.getString("password", "702152") ?: "702152"
+        val customIp = prefs.getString("custom_ip", "") ?: "" // Retrieve the manual IP
 
         startForeground(NOTIF_ID, buildNotification("Starting server…", ""))
 
         fileServer?.stop()
         fileServer = FileServer(applicationContext, port, dir, password).also {
             try {
-                it.start(NanoBase.SOCKET_READ_TIMEOUT, false)
-                val ip  = getLocalIp()
-                val url = "http://$ip:$port"
-                AppState.log("SERVER", "Started on $url  (dir=$dir)")
+                // If customIp is empty, passing null binds to all interfaces (default)
+                val bindHostname = if (customIp.isNotEmpty()) customIp else null
+                it.start(NanoBase.SOCKET_READ_TIMEOUT, false, bindHostname)
+                
+                val displayIp = bindHostname ?: getLocalIp()
+                val url = "http://$displayIp:$port"
+                
+                AppState.log("SERVER", "Started on $url")
                 AppState.serverRunning.postValue(true)
                 AppState.serverUrl.postValue(url)
                 updateNotification("Running — $url", url)
@@ -82,25 +87,15 @@ class ServerService : Service() {
 
     override fun onBind(intent: Intent?): IBinder = binder
 
-    // ── Notification ──────────────────────────────────────────────────────────
     private fun createNotificationChannel() {
-        val chan = NotificationChannel(CHANNEL_ID, "File Server", NotificationManager.IMPORTANCE_LOW).apply {
-            description = "Online Session Explorer server status"
-            setShowBadge(false)
-        }
+        val chan = NotificationChannel(CHANNEL_ID, "File Server", NotificationManager.IMPORTANCE_LOW)
         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(chan)
     }
 
     private fun buildNotification(title: String, url: String): Notification {
-        val openIntent = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val stopIntent = PendingIntent.getService(
-            this, 1,
-            Intent(this, ServerService::class.java).apply { action = ACTION_STOP },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val openIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+        val stopIntent = PendingIntent.getService(this, 1, Intent(this, ServerService::class.java).apply { action = ACTION_STOP }, PendingIntent.FLAG_IMMUTABLE)
+        
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -108,7 +103,6 @@ class ServerService : Service() {
             .setContentIntent(openIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)
             .setOngoing(true)
-            .setSilent(true)
             .build()
     }
 
@@ -117,28 +111,16 @@ class ServerService : Service() {
         nm.notify(NOTIF_ID, buildNotification(title, url))
     }
 
-    // ── Network ───────────────────────────────────────────────────────────────
     private fun getLocalIp(): String {
         try {
             val ifaces = NetworkInterface.getNetworkInterfaces() ?: return "127.0.0.1"
             for (iface in ifaces) {
                 if (!iface.isUp || iface.isLoopback) continue
                 for (addr in iface.inetAddresses) {
-                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        return addr.hostAddress ?: continue
-                    }
+                    if (!addr.isLoopbackAddress && addr is Inet4Address) return addr.hostAddress ?: continue
                 }
             }
         } catch (_: Exception) {}
         return "127.0.0.1"
     }
-
-    // Allow FileServer config to be refreshed without restarting
-    fun refreshConfig() {
-        val dir      = prefs.getString("serve_dir", "/sdcard") ?: "/sdcard"
-        val password = prefs.getString("password", "702152") ?: "702152"
-        fileServer?.updateConfig(dir, password)
-    }
 }
-
-

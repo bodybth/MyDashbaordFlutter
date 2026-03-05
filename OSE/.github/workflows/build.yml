@@ -22,13 +22,20 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Gradle 8.6
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.6'
 
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses 2>/dev/null || true
+      # Fix for the "AndroidX dependencies detected" error
+      - name: Configure AndroidX Properties
+        run: |
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx3g" >> gradle.properties
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -36,13 +43,17 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease --no-daemon --stacktrace
         env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx3g -Dfile.encoding=UTF-8"
-          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
+          # Ensuring ANDROID_HOME is explicitly available for the Graph Walker
+          ANDROID_HOME: /usr/local/lib/android/sdk
 
       - name: Locate and rename APK
         id: apk
         run: |
           APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          if [ -z "$APK" ]; then
+            echo "Error: APK not found! Check build logs above."
+            exit 1
+          fi
           echo "Found: $APK"
           DEST="OnlineSessionExplorer-v1.7.apk"
           cp "$APK" "$DEST"
@@ -72,7 +83,6 @@ jobs:
           name: "Online Session Explorer v1.7 (${{ steps.sha.outputs.short }})"
           body: |
             ## 📱 Online Session Explorer v1.7
-
             Built from commit `${{ steps.sha.outputs.short }}` — ${{ steps.commit.outputs.msg }}
 
             ### ✨ Features
@@ -80,18 +90,13 @@ jobs:
             - ⬆️ Upload files with real-time progress bar
             - ✏️ Rename, 🗑️ delete, 📁 create folders
             - 🔒 Password-protected login screen
-            - 📥 Download any file directly from the browser
             - 🎵 Video & audio streaming with range support
-            - 🌐 Access from any browser on your local network
-            - ⚙️ Configurable port, directory, theme, and password
             - 📋 Live server logs in-app
 
             ### 📦 Installation
             1. Download `OnlineSessionExplorer-v1.7.apk`
-            2. Enable *Install from unknown sources* on your Android device
-            3. Install the APK
-            4. Grant storage permissions when prompted
-            5. Start the server, open the URL shown in any browser
+            2. Enable *Install from unknown sources* on your device
+            3. Install and grant storage permissions
 
             **APK size:** ${{ steps.apk.outputs.apk_size }}
           files: ${{ steps.apk.outputs.apk_path }}
